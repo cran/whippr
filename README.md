@@ -187,22 +187,20 @@ results_kinetics <- vo2_kinetics(
   verbose = TRUE
 )
 #> ──────────────────────────  * V̇O₂ kinetics analysis *  ─────────────────────────
-#> ✓ Detecting outliers
-#> ✓ fitting transition
-#> ✓ fitting transition
+#> ✔ Detecting outliers
 #> • 14 outlier(s) found in transition 1
 #> • 15 outlier(s) found in transition 2
 #> • 13 outlier(s) found in transition 3
-#> ✓ Processing data...
-#> ✓       └─ Removing outliers
-#> ✓       └─ Interpolating each transition
-#> ✓       └─ Ensemble-averaging transitions
-#> ✓       └─ Performing 5-s bin averages
-#> ✓ Fitting data...
-#> ✓       └─ Fitting baseline
-#> ✓       └─ Fitting transition
-#> ✓       └─ Calculating residuals
-#> ✓       └─ Preparing plots
+#> ✔ Processing data...
+#> ✔       └─ Removing outliers
+#> ✔       └─ Interpolating each transition
+#> ✔       └─ Ensemble-averaging transitions
+#> ✔       └─ Performing 5-s bin averages
+#> ✔ Fitting data...
+#> ✔       └─ Fitting baseline
+#> ✔       └─ Fitting transition
+#> ✔       └─ Calculating residuals
+#> ✔       └─ Preparing plots
 #> ──────────────────────────────────  * DONE *  ──────────────────────────────────
 ```
 
@@ -235,13 +233,13 @@ vo2_max(
   method_incremental = "linear"
 )
 #> ────────────────────────────  * V̇O₂ max analysis *  ────────────────────────────
-#> ✓ Normalizing incremental data...
-#> ✓ Detecting outliers
+#> ✔ Normalizing incremental data...
+#> ✔ Detecting outliers
 #> • 2 outlier(s) found in baseline
 #> • 15 outlier(s) found in ramp
-#> ✓ Filtering out outliers...
-#> ✓ Interpolating from breath-by-breath into second-by-second...
-#> ✓ Performing averages...
+#> ✔ Filtering out outliers...
+#> ✔ Interpolating from breath-by-breath into second-by-second...
+#> ✔ Performing averages...
 #> # A tibble: 1 × 6
 #>   VO2max_absolute VO2max_relative POpeak HRmax RERmax plot  
 #>             <dbl>           <dbl>  <int> <dbl>  <dbl> <list>
@@ -250,13 +248,13 @@ vo2_max(
 
 ## Metabolic carts currently supported
 
--   [CardioCoach](https://korr.com/cardiocoach/)
 -   [COSMED](https://www.cosmed.com/en/)
 -   [CORTEX](https://cortex-medical.com/EN)
 -   [NSpire](https://www.pressebox.de/pressemitteilung/nspire-health-gmbh/ZAN-100-Diagnostische-Spirometrie/boxid/745555)
--   [Parvo Medics](https://www.parvo.com/)
+-   Parvo Medics
 -   [Geratherm
     Respiratory](https://www.geratherm-respiratory.com/product-groups/cpet/)
+-   [CardioCoach](https://korr.com/go/cardiocoach/)
 
 ## Online app
 

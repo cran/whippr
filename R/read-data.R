@@ -3,7 +3,7 @@
 #' It reads the raw data exported from the metabolic cart.
 #'
 #' @param path Path to read the file from.
-#' @param metabolic_cart Metabolic cart that was used for data collection. Currently, 'cosmed', 'cortex', 'nspire', 'parvo', 'geratherm', and 'cardiocoach' are supported.
+#' @param metabolic_cart Metabolic cart that was used for data collection. Currently, 'cosmed', 'cortex', 'nspire', 'parvo', 'geratherm', and 'cardiocoach' are supported. Additionaly, there is an option called 'custom' that supports files that do not have a metabolic cart-specific format.
 #' @param time_column The name (quoted) of the column containing the time. Depending on the language of your system, this column might not be "t". Therefore, you may specify it here.  Default to "t".
 #' @param work_rate_column Default is `NULL`. In case your work rate column is coerced as a character column
 #' you can define here the name of this column in your data file. This happens because at the very beginning of the test
@@ -15,7 +15,7 @@
 #' @export
 read_data <- function(
   path,
-  metabolic_cart = c("cosmed", "cortex", "nspire", "parvo", "geratherm", "cardiocoach"),
+  metabolic_cart = c("cosmed", "cortex", "nspire", "parvo", "geratherm", "cardiocoach", "custom"),
   time_column = "t",
   work_rate_column = NULL
 ) {
@@ -32,7 +32,7 @@ read_data <- function(
 #' @export
 read_data.cosmed <- function(
   path,
-  metabolic_cart = c("cosmed", "cortex", "nspire", "parvo", "geratherm", "cardiocoach"),
+  metabolic_cart = c("cosmed", "cortex", "nspire", "parvo", "geratherm", "cardiocoach", "custom"),
   time_column = "t",
   work_rate_column = NULL
 ) {
@@ -74,9 +74,10 @@ read_data.cosmed <- function(
 
     ## this will make sure that different versions of the cosmed will work with this function
     ## newer versions will display differnt time formats (00:00 instead of 00:00:00)
-    if(all(nchar(data_raw2[[1]]) == 5)){
-      data_raw2[[1]] <- paste0("00:", data_raw2[[1]])
-    }
+    data_raw2 <- data_raw2 %>%
+      dplyr::rowwise() %>%
+      dplyr::mutate_at(1, function(x) ifelse(nchar(x) == 5, paste0("00:", x), x)) %>%
+      dplyr::ungroup()
 
     out <- data_raw2 %>%
       dplyr::mutate_at(1, function(x) stringr::str_replace_all(x, ",", ".") %>%
@@ -112,7 +113,7 @@ read_data.cosmed <- function(
 #' @export
 read_data.cortex <- function(
   path,
-  metabolic_cart = c("cosmed", "cortex", "nspire", "parvo", "geratherm", "cardiocoach"),
+  metabolic_cart = c("cosmed", "cortex", "nspire", "parvo", "geratherm", "cardiocoach", "custom"),
   time_column = "t",
   work_rate_column = NULL
 ) {
@@ -178,7 +179,7 @@ read_data.cortex <- function(
 #' @export
 read_data.nspire <- function(
   path,
-  metabolic_cart = c("cosmed", "cortex", "nspire", "parvo", "geratherm", "cardiocoach"),
+  metabolic_cart = c("cosmed", "cortex", "nspire", "parvo", "geratherm", "cardiocoach", "custom"),
   time_column = "t",
   work_rate_column = NULL
 ) {
@@ -226,7 +227,7 @@ read_data.nspire <- function(
 #' @export
 read_data.parvo <- function(
   path,
-  metabolic_cart = c("cosmed", "cortex", "nspire", "parvo", "geratherm", "cardiocoach"),
+  metabolic_cart = c("cosmed", "cortex", "nspire", "parvo", "geratherm", "cardiocoach", "custom"),
   time_column = "t",
   work_rate_column = NULL
 ) {
@@ -280,7 +281,7 @@ read_data.parvo <- function(
 #' @export
 read_data.geratherm <- function(
   path,
-  metabolic_cart = c("cosmed", "cortex", "nspire", "parvo", "geratherm", "cardiocoach"),
+  metabolic_cart = c("cosmed", "cortex", "nspire", "parvo", "geratherm", "cardiocoach", "custom"),
   time_column = "t",
   work_rate_column = NULL
 ) {
@@ -341,7 +342,7 @@ read_data.geratherm <- function(
 #' @export
 read_data.cardiocoach <- function(
   path,
-  metabolic_cart = c("cosmed", "cortex", "nspire", "parvo", "geratherm", "cardiocoach"),
+  metabolic_cart = c("cosmed", "cortex", "nspire", "parvo", "geratherm", "cardiocoach", "custom"),
   time_column = "t",
   work_rate_column = NULL
 ) {
@@ -386,6 +387,48 @@ read_data.cardiocoach <- function(
   metadata$time_column <- "t"
 
   out <- new_whippr_tibble(out, metadata)
+
+  out
+}
+
+#' @export
+read_data.custom <- function(
+    path,
+    metabolic_cart = c("cosmed", "cortex", "nspire", "parvo", "geratherm", "cardiocoach", "custom"),
+    time_column = "t",
+    work_rate_column = NULL
+) {
+  ## retrieve data
+  readings <- suppressMessages(readxl::read_excel(path = path))
+
+  ## define time column as 't' for simplicity
+  column_names <- colnames(readings)
+  column_names[1] <- "t"
+
+  colnames(readings) <- column_names
+
+  ## is the time column in seconds or in hms format?
+  if(stringr::str_detect(string = readings[1,]$t, pattern = ":")) {
+    readings <- readings %>%
+      dplyr::mutate(
+        t = as.character(t),
+        t = dplyr::case_when(
+          nchar(t) == 4 ~ paste0("00:0", t),
+          nchar(t) == 5 ~ paste0("00:", t),
+          TRUE ~ t
+        ),
+        t = lubridate::hms(t),
+        t = lubridate::period_to_seconds(t)
+      )
+  }
+
+  metadata <- NULL
+  metadata$read_data <- TRUE
+  metadata$metabolic_cart <- "Custom"
+  metadata$data_status <- "raw data"
+  metadata$time_column <- "t"
+
+  out <- new_whippr_tibble(readings, metadata)
 
   out
 }
